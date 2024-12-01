@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Python bytecode files
+*.pyc
+*.pyo
+__pycache__/
 # C extensions
 *.so
 
