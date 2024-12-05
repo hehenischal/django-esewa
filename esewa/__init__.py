@@ -1,3 +1,4 @@
-__version__ = "0.1.1"
+__version__ = "1.0.0"
 
-from .signature import generate_signature
+from .signature import generate_signature, verify_signature
+from .payment import EsewaPayment
