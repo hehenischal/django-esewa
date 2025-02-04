@@ -28,8 +28,6 @@ def generate_signature(
     """
     if not total_amount or not transaction_uuid:
         raise ValueError("Both 'total_amount' and 'transaction_uuid' are required.")
-    print(total_amount)
-
     try:
         message = f"total_amount={total_amount},transaction_uuid={transaction_uuid},product_code={product_code}"
         key = key.encode('utf-8')
@@ -44,8 +42,6 @@ def generate_signature(
         return signature
     except Exception as e:
         raise RuntimeError(f"Failed to generate signature: {e}")
-
-
 
 if __name__ == "__main__":
     signature = generate_signature(total_amount=100, transaction_uuid="11-201-13")
