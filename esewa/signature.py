@@ -51,7 +51,6 @@ if __name__ == "__main__":
 
 def verify_signature(
     response_body_base64: str, 
-    generated_signature: str,
 ) -> Tuple[bool, Optional[Dict[str, str]]]:
     """
     Verifies the signature of an eSewa response.
@@ -66,34 +65,35 @@ def verify_signature(
             and the second element is a dictionary of the decoded response data if the signature is valid, otherwise None.
     """
     try:
-        # Step 1: Decode the Base64-encoded response body
-        response_body_json = base64.b64decode(response_body_base64).decode("utf-8")
-        response_data: Dict[str, str] = json.loads(response_body_json)
-        
-        # Step 2: Extract required fields from the response
-        signed_field_names: str = response_data["signed_field_names"]
-        received_signature: str = response_data["signature"]
-        
-        # Step 3: Reconstruct the message string
-        field_names = signed_field_names.split(",")
-        message: str = ",".join(
-            f"{field_name}={response_data[field_name]}" for field_name in field_names
-        )
-        
-        # Step 5: Compare the signatures
-        is_valid: bool = received_signature == generated_signature
-        return is_valid, response_data if is_valid else None
+            response_body_json = base64.b64decode(response_body_base64).decode("utf-8")
+            response_data: Dict[str, str] = json.loads(response_body_json)
+            
+            signed_field_names: str = response_data["signed_field_names"]
+            received_signature: str = response_data["signature"]
+            print(response_data)
+            field_names = signed_field_names.split(",")
+            print(field_names)
+            message: str = ",".join(
+                f"{field_name}={response_data[field_name]}" for field_name in field_names
+            )
+            secret="8gBm/:&EnhH.1/q".encode('utf-8')
+            message = message.encode('utf-8')
+            hmac_sha256 = hmac.new(secret, message, hashlib.sha256)
+            digest = hmac_sha256.digest()
+            signature = base64.b64encode(digest).decode('utf-8')
+            print(signature)
+            is_valid: bool = received_signature == signature
+            return is_valid, response_data if is_valid else None
     except Exception as e:
-        print(f"Error verifying signature: {e}")
-        return False, None
+            print(f"Error verifying signature: {e}")
+            return False, None
 
 
 
 if __name__ == "__main__":
-    response_body_base64 = "eyJ0cmFuc2FjdGlvbl9jb2RlIjoiMExENUNFSCIsInN0YXR1cyI6IkNPTVBMRVRFIiwidG90YWxfYW1vdW50IjoiMSwwMDAuMCIsInRyYW5zYWN0aW9uX3V1aWQiOiIyNDA2MTMtMTM0MjMxIiwicHJvZHVjdF9jb2RlIjoiTlAtRVMtQUJISVNIRUstRVBBWSIsInNpZ25lZF9maWVsZF9uYW1lcyI6InRyYW5zYWN0aW9uX2NvZGUsc3RhdHVzLHRvdGFsX2Ftb3VudCx0cmFuc2FjdGlvbl91dWlkLHByb2R1Y3RfY29kZSxzaWduZWRfZmllbGRfbmFtZXMiLCJzaWduYXR1cmUiOiJNcHd5MFRGbEhxcEpqRlVER2ljKzIybWRvZW5JVFQrQ2N6MUxDNjFxTUFjPSJ9 "
-    secret_key = "Mpwy0TFlHqpJjFUDGic+22mdoenITT+Ccz1LC61qMAc="
+    response_body_base64 = "eyJ0cmFuc2FjdGlvbl9jb2RlIjoiMExENUNFSCIsInN0YXR1cyI6IkNPTVBMRVRFIiwidG90YWxfYW1vdW50IjoiMSwwMDAuMCIsInRyYW5zYWN0aW9uX3V1aWQiOiIyNDA2MTMtMTM0MjMxIiwicHJvZHVjdF9jb2RlIjoiTlAtRVMtQUJISVNIRUstRVBBWSIsInNpZ25lZF9maWVsZF9uYW1lcyI6InRyYW5zYWN0aW9uX2NvZGUsc3RhdHVzLHRvdGFsX2Ftb3VudCx0cmFuc2FjdGlvbl91dWlkLHByb2R1Y3RfY29kZSxzaWduZWRfZmllbGRfbmFtZXMiLCJzaWduYXR1cmUiOiJNcHd5MFRGbEhxcEpqRlVER2ljKzIybWRvZW5JVFQrQ2N6MUxDNjFxTUFjPSJ9"
 
-    is_valid,response_data = verify_signature(response_body_base64, secret_key)
+    is_valid,response_data = verify_signature(response_body_base64)
     if is_valid:
         print("Signature is valid.")
         print("Response data:", response_data)
