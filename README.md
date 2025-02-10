@@ -49,6 +49,10 @@ def confirm_order(request,id):
         failure_url="http://yourdomain.com/failure/",
         secret_key="your_secret_key"
     )
+    payment.create_signature(
+        order.amount,
+        order.uuid
+    )
 
     context = {
         'form':payment.generate_form()
