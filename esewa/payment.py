@@ -67,7 +67,6 @@ class EsewaPayment:
                     "Please set ESEWA_FAILURE_URL in settings."
                 )
             self.failure_url = failure_url or getattr(settings, 'ESEWA_FAILURE_URL', "http://localhost:8000/failure/")
-        
         self.product_code = product_code
 
 
@@ -98,24 +97,29 @@ class EsewaPayment:
     def simulate_payment():
         pass
 
-    def generate_payload(self)->Dict[str, str]:
+    def generate_form(self)->Dict[str, str]:
         """
-        Generates the payload to be sent to eSewa.
-        :return: A dictionary containing the payload data.
+        generate HTML code for eSewa payment gateway
         """
         payload = {
-            "amt": self.amount,
-            "taxAmt": 0,
-            "psc": 0,
-            "pdc": 0,
-            "txAmt": self.amount,
-            "tAmt": self.amount,
-            "pid": self.product_code,
-            "su": "http://localhost:8000/success",
-            "fu": "http://localhost:8000/failure",
-            "rid": self.uuid,
+            "amount": self.amount,
+            "product_delivery_charge": "0",
+            "product_service_charge": "0",
+            "total_amount": self.amount,
+            "tax_amount": 0,
+            "product_code": self.product_code,
+            "transaction_uuid": self.uuid,
+            "success_url": self.success_url,
+            "failure_url": self.failure_url,
+            "signed_field_names": "total_amount,transaction_uuid,product_code",
+            "signature": self.signature
         }
-        return payload
+
+        form= ""
+        for key, value in payload.items():
+            form += f'<input type="hidden" name="{key}" value="{value}">'
+
+        return form
 
 
     def get_status(self, dev: bool) -> str:
@@ -194,17 +198,29 @@ class EsewaPayment:
             return False, None
 
 
-def log_transaction(self):
-    """
-    Logs the transaction details for debugging and record-keeping.
-    """
-    logger = logging.getLogger(__name__)
-    logger.info({
-        "Transaction UUID": self.uuid,
-        "Product Code": self.product_code,
-        "Total Amount": self.amount,
-        "Signature": self.signature
-    })
+    def log_transaction(self):
+        """
+        Logs the transaction details for debugging and record-keeping.
+        """
+        logger = logging.getLogger(__name__)
+        logger.info({
+            "Transaction UUID": self.uuid,
+            "Product Code": self.product_code,
+            "Total Amount": self.amount,
+            "Signature": self.signature
+        })
 
+
+if __name__ == "__main__":
+    payment = EsewaPayment()
+    signature = payment.create_signature(100, "11-201-13")
+    print(f"Generated Signature: {signature}")
+    payload = payment.generate_form()
+    print(f"Generated Payload: {payload}")
+    status = payment.get_status(dev=True)
+    print(f"Transaction Status: {status}")
+    completed = payment.is_completed(dev=True)
+    print(f"Transaction Completed: {completed}")
+    verified, response_data = payment.verify_signature("eyJ0cmFuc2FjdGlvbl9jb2RlIjoiMExENUNFSCIsInN0YXR1cyI6IkNPTVBMRVRFIiwidG90YWxfYW1vdW50IjoiMSwwMDAuMCIsInRyYW5zYWN0aW9uX3V1aWQiOiIyNDA2MTMtMTM0MjMxIiwicHJvZHVjdF9jb2RlIjoiTlAtRVMtQUJISVNIRUstRVBBWSIsInNpZ25lZF9maWVsZF9uYW1lcyI6InRyYW5zYWN0aW9uX2NvZGUsc3RhdHVzLHRvdGFsX2Ftb3VudCx0cmFuc2FjdGlvbl91dWlkLHByb2R1Y3RfY29kZSxzaWduZWRfZmllbGRfbmFtZXMiLCJzaWduYXR1cmUiOiJNcHd5MFRGbEhxcEpqRlVER2ljKzIybWRvZW5JVFQrQ2N6MUxDNjFxTUFjPSJ9 ")
 
 
