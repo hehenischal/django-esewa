@@ -31,8 +31,38 @@ ESEWA_SUCCESS_URL = "localhost:8000/success/"
 ESEWA_FAILURE_URL = "localhost:8000/failure/"
 ESEWA_SECRET_KEY = "<Custom_key_from_Esewa>"
 ```
-
+---
 ## Usage
+
+### Generating HTML Form
+ > Views.py
+```python 
+from esewa import EsewaPayment
+
+def confirm_order(request,id):
+    order = Order.objects.get(id=id)
+   
+
+    payment = EsewaPayment(
+        product_code=order.code,
+        success_url="http://yourdomain.com/success/",
+        failure_url="http://yourdomain.com/failure/",
+        secret_key="your_secret_key"
+    )
+
+    context = {
+        'form':payment.generate_form()
+    }
+    return render(request,'order/checkout.html',context)
+```
+> order/checkout.html
+```html
+<form action="https://rc-epay.esewa.com.np/api/epay/main/v2/form" method="POST">
+    {{form|safe}}
+    <button type="submit">Pay with Esewa </button>
+</form>
+```
+---
 
 ### Generating a Signature
 
@@ -60,14 +90,14 @@ signature = generate_signature(1000, "123abc")
 # In Production
 signature = generate_signature(1000, "123abc", "<your_private_key>", "<product_code>")
 ```
-
+---
 ### Using the EsewaPayment Class
 
 `EsewaPayment` provides additional configuration options for success and failure URLs.
 List of all methods in EsewaPayment:
 - `__init__()`
 - `create_signature()`
-- `generate_payload()`
+- `generate_form()`
 - `get_status()`
 - `is_completed()`
 - `verify_signature()`
@@ -78,6 +108,8 @@ List of In-development methods:
 - `generate_redirect_url()`
 - `refund_payment()`
 - `simulate_payment()`
+
+---
 
 **Initialization:**
 
@@ -110,12 +142,13 @@ If these settings are missing, the package will use the following defaults:
 - `ESEWA_SUCCESS_URL`: `"http://localhost:8000/success/"`
 - `ESEWA_FAILURE_URL`: `"http://localhost:8000/failure/"`
 
+--- 
 ## Contributing
 
 ### Current To-Do List
 
-- Add `is_success()` method for transaction status verification.
 - Write documentation for all methods in the `EsewaPayment` class.
+- Add refund method
 
 ### How to Contribute
 
