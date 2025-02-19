@@ -2,7 +2,6 @@ import hmac
 import hashlib
 import base64
 import json
-from typing import Dict, Optional, Tuple
 
 
 def generate_signature(
@@ -11,7 +10,7 @@ def generate_signature(
         key: str = "8gBm/:&EnhH.1/q", 
         product_code: str = "EPAYTEST"
 ) -> str:
-    """generates hmac sha256 signature for eSewa payment gateway
+    """Generates hmac sha256 signature for eSewa payment gateway
 
     Args:
         total_amount (float): will be processed as a string
@@ -25,6 +24,14 @@ def generate_signature(
 
     Returns:
         str: returns the generated signature
+    
+    Steps:
+        1. Check if total_amount and transaction_uuid are provided.
+        2. Create a message string in the format "total_amount=amount,transaction_uuid=uuid,product_code=code".
+        3. Encode the key and message to bytes.
+        4. Generate HMAC-SHA256 digest using the key and message.
+        5. Convert the digest to Base64.
+        6. Return the Base64-encoded signature.
     """
     if not total_amount or not transaction_uuid:
         raise ValueError("Both 'total_amount' and 'transaction_uuid' are required.")
@@ -51,7 +58,7 @@ if __name__ == "__main__":
 
 def verify_signature(
     response_body_base64: str, 
-) -> Tuple[bool, Optional[Dict[str, str]]]:
+) -> tuple[bool, dict[str, str] | None]:
     """
     Verifies the signature of an eSewa response.
     
@@ -60,13 +67,24 @@ def verify_signature(
         secret_key (str): The secret key for signature generation.
     
     Returns:
-        Tuple[bool, Optional[Dict[str, str]]]: 
-            A tuple where the first element is a boolean indicating the validity of the signature,
-            and the second element is a dictionary of the decoded response data if the signature is valid, otherwise None.
+        bool: True if the signature is valid, False otherwise.
+        dict: The response data if the signature is valid, None otherwise.
+    
+    Raises:
+        Exception: If there is an error during verification.
+    
+    Steps:
+        1. Decode the Base64-encoded response body.
+        2. Parse the JSON response.
+        3. Extract the signed field names and received signature.
+        4. Generate the message to be signed.
+        5. Generate the HMAC-SHA256 signature using the secret key.
+        6. Compare the generated signature with the received signature.
+        7. Return True and the response data if valid, False and None otherwise.
     """
     try:
             response_body_json = base64.b64decode(response_body_base64).decode("utf-8")
-            response_data: Dict[str, str] = json.loads(response_body_json)
+            response_data: dict[str, str] = json.loads(response_body_json)
             
             signed_field_names: str = response_data["signed_field_names"]
             received_signature: str = response_data["signature"]

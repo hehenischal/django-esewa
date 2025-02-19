@@ -4,30 +4,65 @@ from django.conf import settings
 import logging
 import requests
 import json
-from typing import Dict, Optional, Tuple
 from .signature import generate_signature
 
 class EsewaPayment:
     '''
-    A class to handle eSewa payment integration.
-    Attributes:
-    secret_key (str): Secret Key for HMAC signature generation.
-    product_code (str): Your Product Code.
-    Methods:
-    generate_signature(params):
-    create_payment_form(amount, tax_amount, total_amount, transaction_uuid, success_url, failure_url):
-    send_payment_request(amount, tax_amount, total_amount, transaction_uuid, success_url, failure_url):
-    check_transaction_status(product_code, total_amount, transaction_uuid):
-    
-    '''
-    def __init__(self, product_code="EPAYTEST", success_url=None, failure_url=None, secret_key=None):
-        """
-        Initializes the EsewaPayment instance.
+    A class to handle eSewa payment processing.
 
-        :param product_code: The product code provided by eSewa.
-        :param success_url: Optional. URL to redirect upon successful payment.
-        :param failure_url: Optional. URL to redirect upon payment failure.
-        :param secret_key: Optional. Secret key for the eSewa API.
+    Attributes:
+        secret_key (str): Secret key for HMAC signature generation.
+        product_code (str): Your Product Code.
+        success_url (str): URL to redirect on successful payment.
+        failure_url (str): URL to redirect on failed payment.
+        amount (float): The total amount for the transaction.
+        uuid (str): A unique identifier for the transaction.
+        signature (str): The generated signature.
+
+    Methods:
+        __init__(self, product_code, success_url, failure_url, secret_key): Initializes the EsewaPayment class.
+        create_signature(self, total_amount, transaction_uuid): Creates a signature for the payment request.
+        generate_redirect_url(self): Generates a redirect URL for eSewa payment.
+        refund_payment(self): Initiates a refund for a transaction.
+        simulate_payment(self): Simulates a payment for testing purposes.
+        generate_form(self): Generates a form for eSewa payment.
+        get_status(self, dev): Fetches the transaction status from eSewa.
+        is_completed(self, dev): Checks if the transaction is completed.
+        __eq__(self, value): Compare this EsewaPayment instance with another instance for equality.
+        verify_signature(self, response_body_base64): Verifies the signature of an eSewa response.
+        log_transaction(self): Logs the transaction details.
+    
+    Usage:
+        payment = EsewaPayment()
+        signature = payment.create_signature(100, "11-201-13")
+        payload = payment.generate_form()
+        status = payment.get_status(dev=True)
+        completed = payment.is_completed(dev=True)
+
+    '''
+    def __init__(self, product_code="EPAYTEST", success_url=None, failure_url=None, secret_key=None) -> None:
+        """
+        Initializes the EsewaPayment class with the provided parameters or defaults.
+
+        Args:
+            product_code (str): Your Product Code.
+            success_url (str): URL to redirect on successful payment.
+            failure_url (str): URL to redirect on failed payment.
+            secret_key (str): Secret Key for HMAC signature generation.
+        
+        Returns:
+            None
+        
+        Steps:
+            1. Check if the secret_key is provided.
+            2. If not, check if ESEWA_SECRET_KEY is set in settings.
+            3. If neither is provided, use a default secret key.
+            4. Check if the success_url is provided.
+            5. If not, check if ESEWA_SUCCESS_URL is set in settings.
+            6. If neither is provided, use a default success URL.
+            7. Check if the failure_url is provided.
+            8. If not, check if ESEWA_FAILURE_URL is set in settings.
+            9. If neither is provided, use a default failure URL.
         """
         # Handle secret key
         if secret_key:
@@ -77,10 +112,19 @@ class EsewaPayment:
             transaction_uuid: str
             ) -> str:
         """
-        Generates HMAC-SHA256 signature for eSewa payment gateway.
-        :param total_amount: The total amount to be paid.
-        :param transaction_uuid: A unique identifier for the transaction.
-        :return: The generated signature.
+        Creates a signature for the payment request.
+
+        Args:
+            total_amount (float): The total amount for the transaction.
+            transaction_uuid (str): A unique identifier for the transaction.
+
+        Returns:
+            str: The generated signature.
+
+        Steps:
+            1. Set the amount and UUID attributes.
+            2. Generate the signature using the provided parameters.
+            3. Return the generated signature.
         """
         self.amount = total_amount
         self.uuid = transaction_uuid
@@ -88,18 +132,30 @@ class EsewaPayment:
         return self.signature
 
     
-    def generate_redirect_url():
+    def generate_redirect_url() -> None:
         pass
 
-    def refund_payment():
+    def refund_payment() -> None:
         pass
 
-    def simulate_payment():
+    def simulate_payment() -> None:
         pass
 
-    def generate_form(self)->Dict[str, str]:
+    def generate_form(self) -> str:
         """
-        generate HTML code for eSewa payment gateway
+        Generates a form for eSewa payment.
+
+        Args:
+            None
+
+        Returns:
+            str: A HTML code snippet to create a hidden form with necessary fields.
+        
+        Steps:
+            1. Create a payload dictionary with the required fields.
+            2. Initialize an empty string for the form.
+            3. Iterate over the payload items and append hidden input fields to the form string.
+            4. Return the form string.
         """
         payload = {
             "amount": self.amount,
@@ -118,15 +174,26 @@ class EsewaPayment:
         form= ""
         for key, value in payload.items():
             form += f'<input type="hidden" name="{key}" value="{value}">'
-
         return form
 
 
     def get_status(self, dev: bool) -> str:
         """
-        Retrieves the transaction status from eSewa based on the environment.
-        :param dev: If True, use the testing environment URL. If False, use the production environment URL.
-        :return: The status of the transaction as returned by the eSewa API.
+        Fetches the transaction status from eSewa.
+
+        Args:
+            dev (bool): Use the testing environment if True, production otherwise.
+
+        Returns:
+            str: The transaction status.
+
+        Steps:
+            1. Constructs the status URL based on the environment (testing or production).
+            2. Sends a GET request to the eSewa API.
+            3. Checks the response status code.
+            4. Parses the JSON response.
+            5. Returns the transaction status.
+            6. Raises an exception if the request fails.
         """
         status_url_testing = f"https://uat.esewa.com.np/api/epay/transaction/status/?product_code={self.product_code}&total_amount={self.amount}&transaction_uuid={self.uuid}"
         status_url_prod = f"https://epay.esewa.com.np/api/epay/transaction/status/?product_code={self.product_code}&total_amount={self.amount}&transaction_uuid={self.uuid}"
@@ -144,8 +211,15 @@ class EsewaPayment:
     def is_completed(self, dev: bool) -> bool:
         """
         Checks if the transaction is completed.
-        :param dev: Use the testing environment if True, production otherwise.
-        :return: True if the transaction is completed, False otherwise.
+
+        Args:
+            dev (bool): Use the testing environment if True, production otherwise.
+        Returns:
+            bool: True if the transaction is completed, False otherwise.
+        Steps:
+            1. Calls the get_status method to fetch the transaction status.
+            2. Checks if the status is "COMPLETE".
+            3. Returns True if completed, False otherwise.
         """
         return self.get_status(dev) == "COMPLETE"
 
@@ -159,6 +233,11 @@ class EsewaPayment:
         Returns:
             bool: True if the given object is an instance of EsewaPayment and has the same
                 secret_key and product_code as this instance, False otherwise.
+
+        Steps:
+            1. Check if the given object is an instance of EsewaPayment.
+            2. Compare the secret_key and product_code attributes.
+            3. Return True if both attributes match, False otherwise.
         """
         ''''''
         if not isinstance(value, EsewaPayment):
@@ -168,7 +247,7 @@ class EsewaPayment:
     def verify_signature(
             self,
         response_body_base64: str,
-    ) -> Tuple[bool, Optional[Dict[str, str]]]:
+    ) -> tuple[bool, dict[str, str] | None]:
         """
         Verifies the signature of an eSewa response.
         
@@ -176,13 +255,21 @@ class EsewaPayment:
             response_body_base64 (str): The Base64-encoded response body.
         
         Returns:
-            Tuple[bool, Optional[Dict[str, str]]]: 
+            tuple[bool, dict[str, str] | None]: 
                 A tuple where the first element is a boolean indicating the validity of the signature,
                 and the second element is a dictionary of the decoded response data if the signature is valid, otherwise None.
+
+        Steps:
+            1. Decode the Base64-encoded response body.
+            2. Parse the JSON response.
+            3. Extract the signed field names and received signature.
+            4. Construct the message to be signed.
+            5. Compare the received signature with the generated signature.
+            6. Return a tuple with the validity and response data if valid, otherwise None.
         """
         try:
             response_body_json = base64.b64decode(response_body_base64).decode("utf-8")
-            response_data: Dict[str, str] = json.loads(response_body_json)
+            response_data: dict[str, str] = json.loads(response_body_json)
             
             signed_field_names: str = response_data["signed_field_names"]
             received_signature: str = response_data["signature"]
@@ -200,7 +287,17 @@ class EsewaPayment:
 
     def log_transaction(self):
         """
-        Logs the transaction details for debugging and record-keeping.
+        Logs the transaction details.
+
+        Args:
+            None
+
+        Returns:
+            None
+
+        Steps:
+            1. Get a logger instance.
+            2. Log the transaction details.
         """
         logger = logging.getLogger(__name__)
         logger.info({
