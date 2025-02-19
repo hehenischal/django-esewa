@@ -141,7 +141,7 @@ class EsewaPayment:
     def simulate_payment() -> None:
         pass
 
-    def generate_form(self) -> dict[str, str]:
+    def generate_form(self) -> str:
         """
         Generates a form for eSewa payment.
 
@@ -149,7 +149,7 @@ class EsewaPayment:
             None
 
         Returns:
-            dict[str, str]: A dictionary containing the form fields and their values.
+            str: A HTML code snippet to create a hidden form with necessary fields.
         
         Steps:
             1. Create a payload dictionary with the required fields.
