@@ -85,12 +85,9 @@ def verify_signature(
     try:
             response_body_json = base64.b64decode(response_body_base64).decode("utf-8")
             response_data: dict[str, str] = json.loads(response_body_json)
-            
             signed_field_names: str = response_data["signed_field_names"]
             received_signature: str = response_data["signature"]
-            print(response_data)
             field_names = signed_field_names.split(",")
-            print(field_names)
             message: str = ",".join(
                 f"{field_name}={response_data[field_name]}" for field_name in field_names
             )
@@ -99,7 +96,6 @@ def verify_signature(
             hmac_sha256 = hmac.new(secret, message, hashlib.sha256)
             digest = hmac_sha256.digest()
             signature = base64.b64encode(digest).decode('utf-8')
-            print(signature)
             is_valid: bool = received_signature == signature
             return is_valid, response_data if is_valid else None
     except Exception as e:

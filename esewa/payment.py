@@ -67,7 +67,7 @@ class EsewaPayment:
         # Handle secret key
         if secret_key:
             self.secret_key = secret_key
-            print("Secret key is provided")
+
         else:
             logger = logging.getLogger(__name__)
             if not hasattr(settings, 'ESEWA_SECRET_KEY'):
@@ -80,7 +80,7 @@ class EsewaPayment:
         # Handle success URL
         if success_url:
             self.success_url = success_url
-            print("Success URL is provided")
+
         else:
             logger = logging.getLogger(__name__)
             if not hasattr(settings, 'ESEWA_SUCCESS_URL'):
@@ -93,7 +93,6 @@ class EsewaPayment:
         # Handle failure URL
         if failure_url:
             self.failure_url = failure_url
-            print("Failure URL is provided")
         else:
             logger = logging.getLogger(__name__)
             if not hasattr(settings, 'ESEWA_FAILURE_URL'):
