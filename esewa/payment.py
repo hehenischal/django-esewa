@@ -194,7 +194,7 @@ class EsewaPayment:
             5. Returns the transaction status.
             6. Raises an exception if the request fails.
         """
-        status_url_testing = f"https://uat.esewa.com.np/api/epay/transaction/status/?product_code={self.product_code}&total_amount={self.amount}&transaction_uuid={self.uuid}"
+        status_url_testing = f"https://rc.esewa.com.np/api/epay/transaction/status/?product_code={self.product_code}&total_amount={self.amount}&transaction_uuid={self.uuid}"
         status_url_prod = f"https://epay.esewa.com.np/api/epay/transaction/status/?product_code={self.product_code}&total_amount={self.amount}&transaction_uuid={self.uuid}"
 
         url = status_url_testing if dev else status_url_prod
