@@ -6,9 +6,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        "Django>=3.0", 
         "requests>=2.25.1",  
-        "cryptography>=3.4",
     ],
     description="A Django utility for eSewa signature generation.",
     long_description=open("README.md").read(),

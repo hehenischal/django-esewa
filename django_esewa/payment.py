@@ -7,40 +7,53 @@ import json
 from .signature import generate_signature
 
 class EsewaPayment:
-    '''
+    """
     A class to handle eSewa payment processing.
 
     Attributes:
         secret_key (str): Secret key for HMAC signature generation.
-        product_code (str): Your Product Code.
-        success_url (str): URL to redirect on successful payment.
-        failure_url (str): URL to redirect on failed payment.
-        amount (float): The total amount for the transaction.
-        uuid (str): A unique identifier for the transaction.
-        signature (str): The generated signature.
+        product_code (str): Product code for the merchant.
+        success_url (str): URL to redirect to on successful payment.
+        failure_url (str): URL to redirect to on failed payment.
+        amount (float): The base amount for the transaction.
+        tax_amount (float): Tax amount for the transaction.
+        total_amount (float): Total amount including all charges.
+        product_service_charge (float): Service charge for the product.
+        product_delivery_charge (float): Delivery charge for the product.
+        signature (str): The generated signature for the transaction.
+        transaction_uuid (str): Unique identifier for the transaction.
 
     Methods:
-        __init__(self, product_code, success_url, failure_url, secret_key): Initializes the EsewaPayment class.
-        create_signature(self, total_amount, transaction_uuid): Creates a signature for the payment request.
-        generate_redirect_url(self): Generates a redirect URL for eSewa payment.
-        refund_payment(self): Initiates a refund for a transaction.
-        simulate_payment(self): Simulates a payment for testing purposes.
-        generate_form(self): Generates a form for eSewa payment.
-        get_status(self, dev): Fetches the transaction status from eSewa.
-        is_completed(self, dev): Checks if the transaction is completed.
-        __eq__(self, value): Compare this EsewaPayment instance with another instance for equality.
-        verify_signature(self, response_body_base64): Verifies the signature of an eSewa response.
-        log_transaction(self): Logs the transaction details.
-    
-    Usage:
+        __init__(...): Initializes the EsewaPayment class with configuration.
+        create_signature(transaction_uuid): Generates a signature for the payment request.
+        generate_redirect_url(): Generates a redirect URL for eSewa payment (not implemented).
+        refund_payment(): Initiates a refund for a transaction (not implemented).
+        simulate_payment(): Simulates a payment for testing (not implemented).
+        generate_form(): Generates a hidden HTML form for eSewa payment.
+        get_status(dev): Fetches the transaction status from eSewa.
+        is_completed(dev): Checks if the transaction is completed.
+        __eq__(value): Compares this EsewaPayment instance with another for equality.
+        verify_signature(response_body_base64): Verifies the signature of an eSewa response.
+        log_transaction(): Logs the transaction details.
+
+    Example:
         payment = EsewaPayment()
-        signature = payment.create_signature(100, "11-201-13")
+        signature = payment.create_signature("11-201-13")
         payload = payment.generate_form()
         status = payment.get_status(dev=True)
         completed = payment.is_completed(dev=True)
-
-    '''
-    def __init__(self, product_code="EPAYTEST", success_url=None, failure_url=None, secret_key=None) -> None:
+    """
+    def __init__(
+            self, 
+            product_code="EPAYTEST", 
+            success_url="http://localhost:8000/success/", 
+            failure_url="http://localhost:8000/failure/", 
+            secret_key="8gBm/:&EnhH.1/q",
+            amount=0,
+            tax_amount=0,
+            total_amount=0,
+            product_service_charge=0,
+            product_delivery_charge=0) :
         """
         Initializes the EsewaPayment class with the provided parameters or defaults.
 
@@ -64,51 +77,21 @@ class EsewaPayment:
             8. If not, check if ESEWA_FAILURE_URL is set in settings.
             9. If neither is provided, use a default failure URL.
         """
-        # Handle secret key
-        if secret_key:
-            self.secret_key = secret_key
-
-        else:
-            logger = logging.getLogger(__name__)
-            if not hasattr(settings, 'ESEWA_SECRET_KEY'):
-                logger.warning(
-                    "Using default secret key for EsewaPayment. "
-                    "Please set ESEWA_SECRET_KEY in settings."
-                )
-            self.secret_key = secret_key or getattr(settings, 'ESEWA_SECRET_KEY', "8gBm/:&EnhH.1/q")
-        
-        # Handle success URL
-        if success_url:
-            self.success_url = success_url
-
-        else:
-            logger = logging.getLogger(__name__)
-            if not hasattr(settings, 'ESEWA_SUCCESS_URL'):
-                logger.warning(
-                    "Using default success URL for EsewaPayment. "
-                    "Please set ESEWA_SUCCESS_URL in settings."
-                )
-            self.success_url = success_url or getattr(settings, 'ESEWA_SUCCESS_URL', "http://localhost:8000/success/")
-        
-        # Handle failure URL
-        if failure_url:
-            self.failure_url = failure_url
-        else:
-            logger = logging.getLogger(__name__)
-            if not hasattr(settings, 'ESEWA_FAILURE_URL'):
-                logger.warning(
-                    "Using default failure URL for EsewaPayment. "
-                    "Please set ESEWA_FAILURE_URL in settings."
-                )
-            self.failure_url = failure_url or getattr(settings, 'ESEWA_FAILURE_URL', "http://localhost:8000/failure/")
+        self.secret_key = secret_key
+        self.success_url = success_url
+        self.failure_url = failure_url
         self.product_code = product_code
+        self.amount = amount
+        self.tax_amount = tax_amount
+        self.total_amount = total_amount
+        self.product_service_charge = product_service_charge
+        self.product_delivery_charge = product_delivery_charge
 
 
     
     def create_signature(
             self, 
-            total_amount: float, 
-            transaction_uuid: str
+            transaction_uuid:str,
             ) -> str:
         """
         Creates a signature for the payment request.
@@ -125,8 +108,8 @@ class EsewaPayment:
             2. Generate the signature using the provided parameters.
             3. Return the generated signature.
         """
-        self.amount = total_amount
-        self.uuid = transaction_uuid
+        total_amount = self.total_amount
+        self.transaction_uuid = transaction_uuid
         self.signature = generate_signature(total_amount, transaction_uuid, self.secret_key, self.product_code)
         return self.signature
 
@@ -158,12 +141,12 @@ class EsewaPayment:
         """
         payload = {
             "amount": self.amount,
-            "product_delivery_charge": "0",
-            "product_service_charge": "0",
-            "total_amount": self.amount,
-            "tax_amount": 0,
+            "product_delivery_charge": self.product_delivery_charge,
+            "product_service_charge": self.product_service_charge,
+            "total_amount": self.total_amount,
+            "tax_amount": self.tax_amount,
             "product_code": self.product_code,
-            "transaction_uuid": self.uuid,
+            "transaction_uuid": self.transaction_uuid,
             "success_url": self.success_url,
             "failure_url": self.failure_url,
             "signed_field_names": "total_amount,transaction_uuid,product_code",
@@ -207,7 +190,7 @@ class EsewaPayment:
         return response_data.get("status", "UNKNOWN")
 
 
-    def is_completed(self, dev: bool) -> bool:
+    def is_completed(self, dev:bool=False) -> bool:
         """
         Checks if the transaction is completed.
 
