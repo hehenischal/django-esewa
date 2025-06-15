@@ -1,10 +1,9 @@
 import base64
 import requests
-from django.conf import settings
 import logging
 import requests
 import json
-from .signature import generate_signature
+from signature import generate_signature
 
 class EsewaPayment:
     """
@@ -53,7 +52,9 @@ class EsewaPayment:
             tax_amount=0,
             total_amount=0,
             product_service_charge=0,
-            product_delivery_charge=0) :
+            product_delivery_charge=0,
+            transaction_uuid=None):
+
         """
         Initializes the EsewaPayment class with the provided parameters or defaults.
 
@@ -85,13 +86,14 @@ class EsewaPayment:
         self.tax_amount = tax_amount
         self.total_amount = total_amount
         self.product_service_charge = product_service_charge
+        self.transaction_uuid = transaction_uuid
         self.product_delivery_charge = product_delivery_charge
 
 
     
     def create_signature(
             self, 
-            transaction_uuid:str,
+            transaction_uuid=None,
             ) -> str:
         """
         Creates a signature for the payment request.
@@ -109,8 +111,9 @@ class EsewaPayment:
             3. Return the generated signature.
         """
         total_amount = self.total_amount
-        self.transaction_uuid = transaction_uuid
-        self.signature = generate_signature(total_amount, transaction_uuid, self.secret_key, self.product_code)
+        if self.transaction_uuid is None:
+            self.transaction_uuid = transaction_uuid
+        self.signature = generate_signature(total_amount, self.transaction_uuid, self.secret_key, self.product_code)
         return self.signature
 
     
@@ -177,8 +180,8 @@ class EsewaPayment:
             5. Returns the transaction status.
             6. Raises an exception if the request fails.
         """
-        status_url_testing = f"https://rc.esewa.com.np/api/epay/transaction/status/?product_code={self.product_code}&total_amount={self.amount}&transaction_uuid={self.uuid}"
-        status_url_prod = f"https://epay.esewa.com.np/api/epay/transaction/status/?product_code={self.product_code}&total_amount={self.amount}&transaction_uuid={self.uuid}"
+        status_url_testing = f"https://rc.esewa.com.np/api/epay/transaction/status/?product_code={self.product_code}&total_amount={self.amount}&transaction_uuid={self.transaction_uuid}"
+        status_url_prod = f"https://epay.esewa.com.np/api/epay/transaction/status/?product_code={self.product_code}&total_amount={self.amount}&transaction_uuid={self.transaction_uuid}"
 
         url = status_url_testing if dev else status_url_prod
         response = requests.get(url)
@@ -283,7 +286,7 @@ class EsewaPayment:
         """
         logger = logging.getLogger(__name__)
         logger.info({
-            "Transaction UUID": self.uuid,
+            "Transaction UUID": self.transaction_uuid,
             "Product Code": self.product_code,
             "Total Amount": self.amount,
             "Signature": self.signature
@@ -291,15 +294,26 @@ class EsewaPayment:
 
 
 if __name__ == "__main__":
-    payment = EsewaPayment()
-    signature = payment.create_signature(100, "11-201-13")
+    payment = EsewaPayment(
+        product_code="EPAYTEST",
+        success_url="http://localhost:8000/success/",
+        failure_url="http://localhost:8000/failure/",
+        amount=100,
+        tax_amount=0,
+        total_amount=100,
+        product_service_charge=0,
+        product_delivery_charge=0,
+        transaction_uuid="11-200-111sss1",
+    )
+    signature = payment.create_signature()
     print(f"Generated Signature: {signature}")
     payload = payment.generate_form()
-    print(f"Generated Payload: {payload}")
+    # print(f"Generated Payload: {payload}")
     status = payment.get_status(dev=True)
-    print(f"Transaction Status: {status}")
+    # print(f"Transaction Status: {status}")
     completed = payment.is_completed(dev=True)
-    print(f"Transaction Completed: {completed}")
+    # print(f"Transaction Completed: {completed}")
+    payment.log_transaction()
     verified, response_data = payment.verify_signature("eyJ0cmFuc2FjdGlvbl9jb2RlIjoiMExENUNFSCIsInN0YXR1cyI6IkNPTVBMRVRFIiwidG90YWxfYW1vdW50IjoiMSwwMDAuMCIsInRyYW5zYWN0aW9uX3V1aWQiOiIyNDA2MTMtMTM0MjMxIiwicHJvZHVjdF9jb2RlIjoiTlAtRVMtQUJISVNIRUstRVBBWSIsInNpZ25lZF9maWVsZF9uYW1lcyI6InRyYW5zYWN0aW9uX2NvZGUsc3RhdHVzLHRvdGFsX2Ftb3VudCx0cmFuc2FjdGlvbl91dWlkLHByb2R1Y3RfY29kZSxzaWduZWRfZmllbGRfbmFtZXMiLCJzaWduYXR1cmUiOiJNcHd5MFRGbEhxcEpqRlVER2ljKzIybWRvZW5JVFQrQ2N6MUxDNjFxTUFjPSJ9 ")
 
 

@@ -22,41 +22,42 @@ A simple, developer-friendly package for integrating the eSewa Payment Gateway i
 pip install django-esewa
 ```
 
-Note: Ensure you have added necessary settings like `ESEWA_SECRET_KEY`, `ESEWA_SUCCESS_URL`, and `ESEWA_FAILURE_URL` in your `settings.py`.
 
-Even though you can use the `generate_signature` function without creating an object of `EsewaPayment`, if you want to use other features, you need to add `ESEWA_SUCCESS_URL`, `ESEWA_FAILURE_URL` (will fallback to `localhost:8000/success/` & `localhost:8000/failure/`) & `ESEWA_SECRET_KEY` (will fall back to `'8gBm/:&EnhH.1/q'`).
+Even though you can use the `generate_signature`(from django_esewa) function without creating an object of `EsewaPayment`, if you want to use other features, you need to instantiate an object of the class `EsewaPayment`. 
 
-```python
-ESEWA_SUCCESS_URL = "localhost:8000/success/"
-ESEWA_FAILURE_URL = "localhost:8000/failure/"
-ESEWA_SECRET_KEY = "<Custom_key_from_Esewa>"
-```
+
 ---
 ## Usage
+ All the amounts like amount, tax_amount, total_amount, product_delivery_charge, product_service_charge will be defaulted to 0. 
+ success_url will defaulted to `http://localhost:8000/success/` and failure_url will be defaulted to `http://localhost:8000/failure/`. Secret key will be defaulted to `"8gBm/:&EnhH.1/q"`. Product code will be defaulted to `EPAYTEST`. Transaction uuid will be defaulted to `None`.
 
 ### Generating HTML Form
  > Views.py
 ```python 
-from esewa import EsewaPayment
+from django_esewa import EsewaPayment
 
 def confirm_order(request,id):
     order = Order.objects.get(id=id)
-   
 
     payment = EsewaPayment(
         product_code=order.code,
         success_url="http://yourdomain.com/success/",
         failure_url="http://yourdomain.com/failure/",
-        secret_key="your_secret_key"
+        amount=order.amount,
+        tax_amount=calculate_tax(),
+        total_amount=order.total_amount,
+        product_delivery_charge=order.delivery_charge,
+        product_service_charge=order.service_charge
+        transaction_uuid="transaction uuid",
+        secret_key="your_secret_key",
+
     )
-    payment.create_signature(
-        order.amount,
-        order.uuid
-    )
+    signature = payment.create_signature() #Saves the signature as well as return it
 
     context = {
         'form':payment.generate_form()
     }
+    
     return render(request,'order/checkout.html',context)
 ```
 > order/checkout.html
@@ -86,7 +87,7 @@ def generate_signature(
 **Example:**
 
 ```python
-from esewa import generate_signature
+from django_esewa import generate_signature
 
 # During Development
 signature = generate_signature(1000, "123abc")
@@ -118,35 +119,37 @@ List of In-development methods:
 **Initialization:**
 
 ```python
-from esewa import EsewaPayment
+from django_esewa import EsewaPayment
 
 payment = EsewaPayment(
     product_code="EPAYTEST",
-    success_url="http://yourdomain.com/success/",
-    failure_url="http://yourdomain.com/failure/",
-    secret_key="your_secret_key"
+        success_url="http://localhost:8000/success/",
+        failure_url="http://localhost:8000/failure/",
+        amount=100,
+        tax_amount=0,
+        total_amount=100,
+        product_service_charge=0,
+        product_delivery_charge=0,
+        transaction_uuid="11-200-111sss1",
 )
+```
+
+**Signature generation**
+
+```python
+signature = payment.create_signature()
+```
+
+**Form Generation**
+
+```python
+signature = payment.generate_form()
 ```
 
 ### Settings
 
-To use custom configurations, add the following keys to your `settings.py`:
+FR
 
-```python
-# settings.py
-
-ESEWA_SECRET_KEY = "your_secret_key"
-ESEWA_SUCCESS_URL = "http://yourdomain.com/success/"
-ESEWA_FAILURE_URL = "http://yourdomain.com/failure/"
-```
-
-If these settings are missing, the package will use the following defaults:
-
-- `ESEWA_SECRET_KEY`: `"8gBm/:&EnhH.1/q"`
-- `ESEWA_SUCCESS_URL`: `"http://localhost:8000/success/"`
-- `ESEWA_FAILURE_URL`: `"http://localhost:8000/failure/"`
-
---- 
 ## Contributing
 
 ### Current To-Do List

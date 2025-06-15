@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="django-esewa",
-    version="1.0.7",
+    version="1.0.8",
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
@@ -17,7 +17,14 @@ setup(
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Framework :: Django",
+        "Framework :: Flask",
+        "Framework :: FastAPI",
+
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+
         "License :: OSI Approved :: MIT License",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
