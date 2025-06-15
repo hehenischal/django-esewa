@@ -3,7 +3,7 @@ import requests
 import logging
 import requests
 import json
-from signature import generate_signature
+from .signature import generate_signature
 
 class EsewaPayment:
     """
