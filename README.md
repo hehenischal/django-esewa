@@ -143,12 +143,12 @@ signature = payment.create_signature()
 **Form Generation**
 
 ```python
-signature = payment.generate_form()
+form = payment.generate_form()
 ```
 
 ### Settings
 
-FR
+From Version 1.0.8, We are improvising this package to work not only with Django but also with Other Python Frameworks. so there is no Explicit configuration for Django Settings. Feel free to use Previous configuration and then dynamically use the credentials using settings.getattr or python-decouple
 
 ## Contributing
 
