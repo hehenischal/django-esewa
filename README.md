@@ -2,6 +2,9 @@
 
 A simple, developer-friendly package for integrating the eSewa Payment Gateway into Django applications.
 
+# Learn Django (100% Free) at your own pace
+- [django-tutorial.dev Payment integration](https://django-tutorial.dev/course/payment-integration/esewa-integration/django-esewa-package/)
+
 ## Overview
 
 `django-esewa` was developed by Nischal Lamichhane to simplify eSewa integration for Python/Django developers. It aims to handle common payment gateway tasks like generating HMAC signatures, verifying transactions, and status checks (in future versions).
