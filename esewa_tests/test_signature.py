@@ -1,5 +1,5 @@
 import unittest
-from esewa.signature import generate_signature
+from django_esewa.signature import generate_signature
 
 class TestEsewaSignature(unittest.TestCase):
     def test_generate_signature_valid(self):
