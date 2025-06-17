@@ -117,7 +117,7 @@ class TestEsewaPayment(unittest.TestCase):
         self.assertIn('name="signed_field_names"', form)
         self.assertIn('name="signature"', form)
 
-    @patch('requests.get')
+    @patch('django_esewa.payment.requests.get')
     def test_get_status_success(self, mock_get):
         """Test successful status check."""
         # Mock successful response
@@ -235,7 +235,7 @@ class TestEsewaPayment(unittest.TestCase):
         )
         payment.create_signature()
         
-        with patch('logging.getLogger') as mock_logger:
+        with patch('django_esewa.payment.logging.getLogger') as mock_logger:
             mock_log = MagicMock()
             mock_logger.return_value = mock_log
             payment.log_transaction()
