@@ -162,7 +162,7 @@ class EsewaPayment:
         return form
 
 
-    def get_status(self, dev: bool) -> str:
+    def get_status(self, dev: bool=False) -> str:
         """
         Fetches the transaction status from eSewa.
 
