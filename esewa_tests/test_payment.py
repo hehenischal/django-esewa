@@ -266,5 +266,24 @@ class TestEsewaPayment(unittest.TestCase):
         self.assertNotEqual(payment1, payment3)
         self.assertNotEqual(payment1, "not a payment object")
 
+    def test_generate_redirect_url_html(self):
+        """Verify redirect HTML wraps elements inside valid auto-submitting form layouts."""
+        payment = EsewaPayment(
+            product_code=self.test_product_code,
+            success_url=self.test_success_url,
+            failure_url=self.test_failure_url,
+            secret_key=self.test_secret_key,
+            amount=self.test_amount,
+            total_amount=self.test_total_amount,
+            transaction_uuid=self.test_uuid
+        )
+        payment.create_signature()
+        
+        html = payment.generate_redirect_url(dev=True)
+        
+        self.assertIn('action="https://rc-epay.esewa.com.np/', html)
+        self.assertIn('method="POST"', html)
+        self.assertIn("document.getElementById('esewa_auto_form').submit();", html)
+
 if __name__ == '__main__':
     unittest.main() 

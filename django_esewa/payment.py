@@ -115,11 +115,35 @@ class EsewaPayment:
             self.transaction_uuid = transaction_uuid
         self.signature = generate_signature(total_amount, self.transaction_uuid, self.secret_key, self.product_code)
         return self.signature
-
     
-    def generate_redirect_url() -> None:
-        pass
+    def generate_redirect_url(self, dev: bool = False) -> str:
+        """
+        Generates an auto-submitting HTML page string that immediately 
+        bounces the browser to eSewa using a secure POST request.
+        
+        Args:
+            dev (bool): Use the testing environment if True, production otherwise.
+        Returns:
+            str: An HTML page string that auto-submits a POST form.
+        """
+        base_url = "https://rc-epay.esewa.com.np/api/epay/main/v2/form" if dev else "https://epay.esewa.com.np/api/epay/main/v2/form"
+        form_fields = self.generate_form()
 
+        html_page = f"""
+        <html>
+            <head><title>Redirecting to eSewa...</title></head>
+            <body>
+                <form id="esewa_auto_form" action="{base_url}" method="POST">
+                    {form_fields}
+                </form>
+                <script type="text/javascript">
+                    document.getElementById('esewa_auto_form').submit();
+                </script>
+            </body>
+        </html>
+        """
+        return html_page
+                
     def refund_payment() -> None:
         pass
 
